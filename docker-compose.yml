@@ -21,7 +21,6 @@ services:
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
       - DATABASE_URL=postgresql://biblehaus:${POSTGRES_PASSWORD}@db:5432/biblehaus
     volumes:
       - ./tts:/app/.cache/tts

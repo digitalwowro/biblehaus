@@ -18,7 +18,7 @@ curl -o docker-compose.yml https://raw.githubusercontent.com/digitalwowro/bibleh
 openssl rand -base64 48
 ```
 
-4. Edit [`.env`](D:/Code/projects/biblehaus/.env) and set `JWT_SECRET` to the generated value.
+4. Edit [`.env`](D:/Code/projects/biblehaus/.env), set `JWT_SECRET` to the generated value, and adjust the ports if needed.
 
 5. Start the containers:
 
@@ -26,7 +26,7 @@ openssl rand -base64 48
 docker compose up -d
 ```
 
-The app runs at [http://localhost:3000](http://localhost:3000).
+The app runs at `http://localhost:<APP_PORT>`, which defaults to [http://localhost:3000](http://localhost:3000).
 
 Default admin credentials:
 

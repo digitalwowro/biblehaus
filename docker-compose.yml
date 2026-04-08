@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: biblehaus
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - ./sql:/var/lib/postgresql/data
 
@@ -17,7 +17,7 @@ services:
     image: ${WEB_IMAGE:-ghcr.io/digitalwowro/biblehaus:latest}
     pull_policy: always
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     env_file:
       - .env
     environment:

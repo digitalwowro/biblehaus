@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Language {
+  id         Int       @id @default(autoincrement())
+  code       String    @unique @db.VarChar(10) // ISO 639, e.g. "en", "ro"
+  name       String    @db.VarChar(100) // English display name
+  nativeName String    @map("native_name") @db.VarChar(100)
+  direction  String    @default("ltr") @db.VarChar(3) // "ltr" or "rtl"
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  versions   Version[]
+
+  @@map("languages")
+}
+
+model Version {
+  id           Int      @id @default(autoincrement())
+  languageId   Int      @map("language_id")
+  abbreviation String   @unique @db.VarChar(20) // e.g. "KJV", "NIV"
+  name         String   @db.VarChar(200)
+  description  String?  @db.Text
+  isPublished  Boolean  @default(false) @map("is_published")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  language     Language @relation(fields: [languageId], references: [id], onDelete: Restrict)
+  books        Book[]
+
+  @@index([languageId])
+  @@map("versions")
+}
+
+model Book {
+  id            Int       @id @default(autoincrement())
+  versionId     Int       @map("version_id")
+  bookNumber    Int       @map("book_number") // 1-66 canonical order
+  name          String    @db.VarChar(100) // Localized book name
+  abbreviation  String?   @db.VarChar(20) // e.g. "Gen", "Mt"
+  testament     String    @db.VarChar(3) // "OT" or "NT"
+  totalChapters Int       @default(0) @map("total_chapters")
+  version       Version   @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  chapters      Chapter[]
+
+  @@unique([versionId, bookNumber])
+  @@map("books")
+}
+
+model Chapter {
+  id            Int     @id @default(autoincrement())
+  bookId        Int     @map("book_id")
+  chapterNumber Int     @map("chapter_number")
+  totalVerses   Int     @default(0) @map("total_verses")
+  book          Book    @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  verses        Verse[]
+
+  @@unique([bookId, chapterNumber])
+  @@map("chapters")
+}
+
+model Verse {
+  id          Int     @id @default(autoincrement())
+  chapterId   Int     @map("chapter_id")
+  verseNumber Int     @map("verse_number")
+  text        String  @db.Text
+  chapter     Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([chapterId, verseNumber])
+  @@map("verses")
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  name         String?  @db.VarChar(100)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("admin_users")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  email     String   @unique @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+  apiKeys   ApiKey[]
+
+  @@map("users")
+}
+
+model ApiKey {
+  id         Int                @id @default(autoincrement())
+  userId     Int                @map("user_id")
+  key        String             @unique @db.VarChar(64)
+  name       String             @db.VarChar(100)
+  domain     String             @db.VarChar(255)
+  isActive   Boolean            @default(true) @map("is_active")
+  rateLimit  Int                @default(100) @map("rate_limit")
+  createdAt  DateTime           @default(now()) @map("created_at")
+  lastUsedAt DateTime?          @map("last_used_at")
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requests   ApiRequestLog[]
+
+  @@index([key])
+  @@map("api_keys")
+}
+
+model ApiRequestLog {
+  id         BigInt   @id @default(autoincrement())
+  apiKeyId   Int?     @map("api_key_id")
+  method     String   @db.VarChar(10)
+  path       String   @db.VarChar(500)
+  statusCode Int      @map("status_code")
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  createdAt  DateTime @default(now()) @map("created_at")
+  apiKey     ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+
+  @@index([apiKeyId, createdAt])
+  @@index([createdAt])
+  @@map("api_request_logs")
+}

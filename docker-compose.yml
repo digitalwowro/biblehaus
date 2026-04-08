@@ -12,6 +12,12 @@ services:
       - ./sql:/var/lib/postgresql/data
     networks:
       - biblehaus
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U biblehaus -d biblehaus"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   web:
     image: ghcr.io/digitalwowro/biblehaus:latest
@@ -25,7 +31,8 @@ services:
     volumes:
       - ./tts:/app/.cache/tts
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - biblehaus

@@ -14,7 +14,7 @@ services:
       - ./sql:/var/lib/postgresql/data
 
   web:
-    image: ${WEB_IMAGE:-ghcr.io/digitalwowro/biblehaus:latest}
+    image: ghcr.io/digitalwowro/biblehaus:latest
     pull_policy: always
     ports:
       - "${APP_PORT:-3000}:3000"

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { success, error } from "@/lib/api/response";
+import { hashPassword } from "@/lib/auth/admin";
 
 export async function PUT(
   request: NextRequest,
@@ -8,13 +9,85 @@ export async function PUT(
 ) {
   const { id } = await params;
   const body = await request.json();
-  const { name, email } = body;
+  const userId = parseInt(id);
+  const { name, email, password, isSuspended, maxApiKeys } = body;
+
+  if (isSuspended !== undefined) {
+    const nextSuspendedState = Boolean(isSuspended);
+
+    const user = await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { isSuspended: nextSuspendedState },
+      });
+
+      if (nextSuspendedState) {
+        await tx.apiKey.updateMany({
+          where: { userId, isActive: true },
+          data: {
+            isActive: false,
+            wasActiveBeforeSuspension: true,
+          },
+        });
+
+        await tx.apiKey.updateMany({
+          where: {
+            userId,
+            isActive: false,
+            wasActiveBeforeSuspension: false,
+          },
+          data: {
+            wasActiveBeforeSuspension: false,
+          },
+        });
+      } else {
+        await tx.apiKey.updateMany({
+          where: { userId, wasActiveBeforeSuspension: true },
+          data: {
+            isActive: true,
+            wasActiveBeforeSuspension: false,
+          },
+        });
+      }
+
+      return tx.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          maxApiKeys: true,
+          isSuspended: true,
+          createdAt: true,
+        },
+      });
+    });
+
+    return success(user);
+  }
 
   const user = await prisma.user.update({
-    where: { id: parseInt(id) },
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      maxApiKeys: true,
+      isSuspended: true,
+      createdAt: true,
+    },
     data: {
       ...(name && { name }),
       ...(email && { email }),
+      ...(maxApiKeys !== undefined
+        ? {
+            maxApiKeys:
+              maxApiKeys === null || maxApiKeys === ""
+                ? null
+                : Number(maxApiKeys),
+          }
+        : {}),
+      ...(password ? { passwordHash: await hashPassword(password) } : {}),
     },
   });
 

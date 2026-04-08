@@ -13,6 +13,10 @@ interface User {
   email: string;
 }
 
+interface UsersResponse {
+  users: User[];
+}
+
 interface ApiKey {
   id: number;
   key: string;
@@ -29,12 +33,21 @@ export default function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [newKeyModal, setNewKeyModal] = useState(false);
   const [newKeyValue, setNewKeyValue] = useState("");
-  const [form, setForm] = useState({ userId: "", name: "", domain: "" });
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState("");
+  const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
+  const [createForm, setCreateForm] = useState({ userId: "", name: "", domain: "" });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    domain: "",
+    isActive: "true",
+  });
+  const [savingCreate, setSavingCreate] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [createFormError, setCreateFormError] = useState("");
+  const [editFormError, setEditFormError] = useState("");
 
   async function fetchData() {
     const [keysRes, usersRes] = await Promise.all([
@@ -44,7 +57,10 @@ export default function ApiKeysPage() {
     const keysData = await keysRes.json();
     const usersData = await usersRes.json();
     if (keysData.success) setKeys(keysData.data);
-    if (usersData.success) setUsers(usersData.data);
+    if (usersData.success) {
+      const payload = usersData.data as UsersResponse;
+      setUsers(payload.users);
+    }
     setLoading(false);
   }
 
@@ -62,7 +78,8 @@ export default function ApiKeysPage() {
         setKeys(keysData.data);
       }
       if (!cancelled && usersData.success) {
-        setUsers(usersData.data);
+        const payload = usersData.data as UsersResponse;
+        setUsers(payload.users);
       }
       if (!cancelled) {
         setLoading(false);
@@ -77,43 +94,106 @@ export default function ApiKeysPage() {
   }, []);
 
   function openCreate() {
-    setForm({ userId: "", name: "", domain: "" });
-    setFormError("");
-    setModalOpen(true);
+    setCreateForm({ userId: "", name: "", domain: "" });
+    setCreateFormError("");
+    setCreateModalOpen(true);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function openEdit(key: ApiKey) {
+    setEditingKey(key);
+    setEditForm({
+      name: key.name,
+      domain: key.domain,
+      isActive: String(key.isActive),
+    });
+    setEditFormError("");
+    setEditModalOpen(true);
+  }
+
+  async function handleCreateSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setFormError("");
-    setSaving(true);
+    setCreateFormError("");
+    setSavingCreate(true);
 
     const res = await fetch("/api/admin/api-keys", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(createForm),
     });
 
     const data = await res.json();
-    setSaving(false);
+    setSavingCreate(false);
 
     if (!data.success) {
-      setFormError(data.error.message);
+      setCreateFormError(data.error.message);
       return;
     }
 
-    setModalOpen(false);
+    setCreateModalOpen(false);
     setNewKeyValue(data.data.rawKey);
     setNewKeyModal(true);
     fetchData();
   }
 
-  async function toggleActive(key: ApiKey) {
-    await fetch(`/api/admin/api-keys/${key.id}`, {
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingKey) return;
+
+    setEditFormError("");
+    setSavingEdit(true);
+
+    const res = await fetch(`/api/admin/api-keys/${editingKey.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isActive: !key.isActive }),
+      body: JSON.stringify({
+        name: editForm.name,
+        domain: editForm.domain,
+        isActive: editForm.isActive === "true",
+      }),
     });
-    fetchData();
+
+    const data = await res.json();
+    setSavingEdit(false);
+
+    if (!data.success) {
+      setEditFormError(data.error.message);
+      return;
+    }
+
+    setEditModalOpen(false);
+    await fetchData();
+  }
+
+  async function handleRegenerate() {
+    if (!editingKey) return;
+    if (!confirm(`Regenerate API key "${editingKey.name}"?`)) return;
+
+    setEditFormError("");
+    setSavingEdit(true);
+
+    const res = await fetch(`/api/admin/api-keys/${editingKey.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: editForm.name,
+        domain: editForm.domain,
+        isActive: editForm.isActive === "true",
+        regenerate: true,
+      }),
+    });
+
+    const data = await res.json();
+    setSavingEdit(false);
+
+    if (!data.success) {
+      setEditFormError(data.error.message);
+      return;
+    }
+
+    setEditModalOpen(false);
+    setNewKeyValue(data.data.rawKey);
+    setNewKeyModal(true);
+    await fetchData();
   }
 
   async function handleDelete(key: ApiKey) {
@@ -147,7 +227,7 @@ export default function ApiKeysPage() {
       ) : (
         <DataTable
           columns={[
-            { key: "name", header: "Name" },
+            { key: "name", header: "Key Name" },
             {
               key: "key",
               header: "Key",
@@ -159,8 +239,13 @@ export default function ApiKeysPage() {
             },
             {
               key: "user",
-              header: "User",
+              header: "User Name",
               render: (k: ApiKey) => k.user.name,
+            },
+            {
+              key: "userEmail",
+              header: "Email",
+              render: (k: ApiKey) => k.user.email,
             },
             { key: "domain", header: "Domain" },
             {
@@ -169,11 +254,16 @@ export default function ApiKeysPage() {
               render: (k: ApiKey) => String(k._count?.requests ?? 0),
             },
             {
+              key: "createdAt",
+              header: "Created",
+              render: (k: ApiKey) =>
+                new Date(k.createdAt).toLocaleDateString(),
+            },
+            {
               key: "isActive",
               header: "Status",
               render: (k: ApiKey) => (
-                <button
-                  onClick={() => toggleActive(k)}
+                <span
                   className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition ${
                     k.isActive
                       ? "border-[rgba(34,122,89,0.18)] bg-[rgba(34,122,89,0.08)] text-[var(--accent-strong)]"
@@ -181,38 +271,44 @@ export default function ApiKeysPage() {
                   }`}
                 >
                   {k.isActive ? "Active" : "Inactive"}
-                </button>
+                </span>
               ),
             },
           ]}
           data={keys}
           keyField="id"
           actions={(k: ApiKey) => (
-            <Button variant="danger" onClick={() => handleDelete(k)}>
-              Delete
-            </Button>
+            <>
+              <Button variant="secondary" onClick={() => openEdit(k)}>
+                Edit
+              </Button>
+              <Button variant="danger" onClick={() => handleDelete(k)}>
+                Delete
+              </Button>
+            </>
           )}
           emptyMessage="No API keys yet. Generate one to get started."
         />
       )}
 
-      {/* Create Key Modal */}
       <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
         title="Generate API Key"
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {formError && (
+        <form onSubmit={handleCreateSubmit} className="space-y-4">
+          {createFormError && (
             <div className="rounded-xl border border-[rgba(193,62,62,0.18)] bg-[rgba(193,62,62,0.08)] p-3 text-sm text-[var(--accent-red)]">
-              {formError}
+              {createFormError}
             </div>
           )}
           <Select
             id="userId"
             label="User"
-            value={form.userId}
-            onChange={(e) => setForm({ ...form, userId: e.target.value })}
+            value={createForm.userId}
+            onChange={(e) =>
+              setCreateForm({ ...createForm, userId: e.target.value })
+            }
             placeholder="Select a user"
             options={users.map((u) => ({
               value: String(u.id),
@@ -224,34 +320,102 @@ export default function ApiKeysPage() {
             id="name"
             label="Key Name"
             placeholder="e.g. Production, Staging"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            value={createForm.name}
+            onChange={(e) =>
+              setCreateForm({ ...createForm, name: e.target.value })
+            }
             required
           />
           <Input
             id="domain"
             label="Domain"
             placeholder="e.g. example.com"
-            value={form.domain}
-            onChange={(e) => setForm({ ...form, domain: e.target.value })}
+            value={createForm.domain}
+            onChange={(e) =>
+              setCreateForm({ ...createForm, domain: e.target.value })
+            }
             required
           />
           <div className="flex justify-end gap-3 pt-2">
             <Button
               type="button"
               variant="secondary"
-              onClick={() => setModalOpen(false)}
+              onClick={() => setCreateModalOpen(false)}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Generating..." : "Generate"}
+            <Button type="submit" disabled={savingCreate}>
+              {savingCreate ? "Generating..." : "Generate"}
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* New Key Display Modal */}
+      <Modal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit API Key"
+      >
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          {editFormError && (
+            <div className="rounded-xl border border-[rgba(193,62,62,0.18)] bg-[rgba(193,62,62,0.08)] p-3 text-sm text-[var(--accent-red)]">
+              {editFormError}
+            </div>
+          )}
+          <Input
+            id="edit-name"
+            label="Key Name"
+            placeholder="e.g. Production, Staging"
+            value={editForm.name}
+            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+            required
+          />
+          <Input
+            id="edit-domain"
+            label="Domain"
+            placeholder="e.g. example.com"
+            value={editForm.domain}
+            onChange={(e) =>
+              setEditForm({ ...editForm, domain: e.target.value })
+            }
+            required
+          />
+          <Select
+            id="edit-status"
+            label="Status"
+            value={editForm.isActive}
+            onChange={(e) =>
+              setEditForm({ ...editForm, isActive: e.target.value })
+            }
+            options={[
+              { value: "true", label: "Active" },
+              { value: "false", label: "Inactive" },
+            ]}
+            required
+          />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleRegenerate}
+              disabled={savingEdit}
+            >
+              {savingEdit ? "Saving..." : "Regenerate Key"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setEditModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={savingEdit}>
+              {savingEdit ? "Saving..." : "Update"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
       <Modal
         open={newKeyModal}
         onClose={() => setNewKeyModal(false)}

@@ -27,6 +27,20 @@ export async function POST(request: NextRequest) {
     return error("User not found", "NOT_FOUND", 404);
   }
 
+  if (user.maxApiKeys !== null) {
+    const keysCount = await prisma.apiKey.count({
+      where: { userId: parseInt(userId) },
+    });
+
+    if (keysCount >= user.maxApiKeys) {
+      return error(
+        `This user has reached the maximum of ${user.maxApiKeys} API keys.`,
+        "API_KEY_LIMIT_REACHED",
+        409
+      );
+    }
+  }
+
   const rawKey = `bh_${randomBytes(30).toString("hex")}`;
 
   const apiKey = await prisma.apiKey.create({
@@ -35,6 +49,8 @@ export async function POST(request: NextRequest) {
       key: rawKey,
       name,
       domain,
+      isActive: !user.isSuspended,
+      wasActiveBeforeSuspension: false,
     },
     include: {
       user: { select: { id: true, name: true, email: true } },

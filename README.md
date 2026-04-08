@@ -117,6 +117,7 @@ Docker Compose uses named volumes:
 On container startup, the app ensures that this default admin exists:
 
 - email: `account@bible.haus`
+ - email: `admin@bible.haus`
 - password: `biblehaus`
 
 This account is only created if it does not already exist in the database. Change the default password after the first login.

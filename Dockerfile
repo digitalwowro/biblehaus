@@ -13,13 +13,6 @@ RUN mkdir -p public
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx prisma generate
 RUN npm run build
-# Bundle seed script to plain JS
-RUN npx esbuild prisma/seed.ts --bundle --platform=node --format=esm \
-    --outfile=prisma/seed.mjs \
-    --external:../src/generated/prisma/client \
-    --external:@prisma/adapter-pg \
-    --external:bcryptjs \
-    --external:dotenv/config
 
 # Stage 3: Production runner
 FROM node:20-alpine AS runner
@@ -47,7 +40,7 @@ COPY --from=builder /app/prisma/migrations ./prisma/migrations
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 # Seed script
-COPY --from=builder --chown=nextjs:nodejs /app/prisma/seed.mjs ./prisma/seed.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/prisma/seed.ts ./prisma/seed.ts
 
 # TTS cache directory
 RUN mkdir -p /app/.cache/tts && chown nextjs:nodejs /app/.cache/tts

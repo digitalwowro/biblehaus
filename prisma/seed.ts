@@ -7,19 +7,12 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const email = process.env.ADMIN_SEED_EMAIL;
-  const password = process.env.ADMIN_SEED_PASSWORD;
-
-  if (!email || !password) {
-    console.log(
-      "Skipping admin seed. Set ADMIN_SEED_EMAIL and ADMIN_SEED_PASSWORD to create a seed admin user.",
-    );
-    return;
-  }
+  const email = "account@bible.haus";
+  const password = "biblehaus";
 
   const existing = await prisma.adminUser.findUnique({ where: { email } });
   if (existing) {
-    console.log(`Admin user "${email}" already exists, skipping.`);
+    console.log(`Default admin user "${email}" already exists, skipping.`);
     return;
   }
 
@@ -29,12 +22,12 @@ async function main() {
     data: {
       email,
       passwordHash,
-      name: "Admin",
+      name: "Account",
     },
   });
 
-  console.log(`Created admin user: ${email} / ${password}`);
-  console.log("Store these credentials securely and change the password if needed.");
+  console.log(`Created default admin user: ${email} / ${password}`);
+  console.log("Change the default password after the first login.");
 }
 
 main()

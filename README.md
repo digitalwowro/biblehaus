@@ -29,8 +29,6 @@ Optional values:
 
 ```env
 POSTGRES_PASSWORD=biblehaus_dev
-ADMIN_SEED_EMAIL=
-ADMIN_SEED_PASSWORD=
 TTS_ENABLED=false
 OPENAI_API_KEY=
 TTS_VOICE=nova
@@ -38,7 +36,6 @@ TTS_VOICE=nova
 
 Notes:
 
-- `ADMIN_SEED_EMAIL` and `ADMIN_SEED_PASSWORD` are optional. If both are set, the web container seeds an admin user on startup.
 - TTS is disabled by default. Set `TTS_ENABLED=true` and provide `OPENAI_API_KEY` if you want to enable it.
 
 ### Start
@@ -115,13 +112,11 @@ Docker Compose uses named volumes:
 - `pgdata` for Postgres data
 - `tts_cache` for generated TTS audio cache
 
-### Admin Seeding
+### Default Admin
 
-If you want Docker startup to create an admin account, set both of these before running the stack:
+On container startup, the app ensures that this default admin exists:
 
-```env
-ADMIN_SEED_EMAIL=admin@example.com
-ADMIN_SEED_PASSWORD=change-me
-```
+- email: `account@bible.haus`
+- password: `biblehaus`
 
-If either value is blank, admin seeding is skipped.
+This account is only created if it does not already exist in the database. Change the default password after the first login.

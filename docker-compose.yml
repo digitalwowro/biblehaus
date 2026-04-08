@@ -9,9 +9,9 @@ services:
       POSTGRES_USER: biblehaus
       POSTGRES_PASSWORD: biblehaus
     volumes:
-      - ./sql:/var/lib/postgresql/data
+      - biblehaus_sql:/var/lib/postgresql/data
     networks:
-      - biblehaus
+      - biblehaus_internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U biblehaus -d biblehaus"]
       interval: 5s
@@ -35,7 +35,8 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - biblehaus
+      - biblehaus_internal
+      - biblehaus_external
     healthcheck:
       test:
         [
@@ -48,6 +49,11 @@ services:
       start_period: 20s
 
 networks:
-  biblehaus:
+  biblehaus_internal:
     internal: true
+  biblehaus_external:
+    internal: false
+
+volumes:
+  biblehaus_sql:
 

@@ -20,7 +20,6 @@ openssl rand -base64 48
 
 4. Edit [`.env`](D:/Code/projects/biblehaus/.env) and set the mandatory values:
    - `JWT_SECRET`
-   - `POSTGRES_PASSWORD`
    - `APP_PORT`
 
 5. Start the containers:

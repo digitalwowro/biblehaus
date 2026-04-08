@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BrandLogo } from "@/components/brand/logo";
 
 const navItems = [
   { href: "/admin", label: "Dashboard" },
@@ -25,9 +26,7 @@ export default function AdminLayout({
       <aside className="flex w-64 shrink-0 flex-col border-r border-[var(--line-soft)] bg-white">
         <div className="border-b border-[var(--line-soft)] px-5 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--ink-strong)] text-sm font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.14)]">
-              B
-            </div>
+            <BrandLogo href="/" size="sidebar" />
             <div>
               <h1 className="text-[1.05rem] font-semibold tracking-[-0.03em] text-[var(--ink-strong)]">
                 BibleHaus

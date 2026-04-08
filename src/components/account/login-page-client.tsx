@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { t, type Locale } from "@/lib/i18n/translations";
 import { BrandLogo } from "@/components/brand/logo";
 
-export default function AdminLoginPage() {
+export function LoginPageClient({ locale }: { locale: Locale }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +19,7 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/admin/auth/login", {
+      const res = await fetch("/api/account/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -30,22 +32,28 @@ export default function AdminLoginPage() {
         return;
       }
 
-      router.push("/admin");
+      router.push("/account");
+      router.refresh();
     } catch {
-      setErrorMsg("An unexpected error occurred");
+      setErrorMsg(t(locale, "account.login.unexpected"));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--surface-base)]">
+    <div className="flex min-h-[calc(100vh-9rem)] items-center justify-center">
       <div className="w-full max-w-sm rounded-[24px] border border-[var(--line-soft)] bg-white p-8 shadow-[0_24px_64px_rgba(15,23,42,0.08)]">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex justify-center">
             <BrandLogo size="login" priority />
           </div>
-          <p className="mt-1 text-sm text-[var(--ink-muted)]">Admin Panel</p>
+          <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--ink-strong)]">
+            {t(locale, "account.portal")}
+          </h1>
+          <p className="mt-1 text-sm text-[var(--ink-muted)]">
+            {t(locale, "account.login.subtitle")}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -63,7 +71,7 @@ export default function AdminLoginPage() {
               htmlFor="email"
               className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-subtle)]"
             >
-              Email
+              {t(locale, "form.email")}
             </label>
             <input
               id="email"
@@ -80,7 +88,7 @@ export default function AdminLoginPage() {
               htmlFor="password"
               className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-subtle)]"
             >
-              Password
+              {t(locale, "form.password")}
             </label>
             <input
               id="password"
@@ -98,9 +106,21 @@ export default function AdminLoginPage() {
             className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[var(--accent-strong)] px-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(34,122,89,0.18)] transition hover:bg-[var(--accent-strong-hover)] disabled:cursor-not-allowed disabled:opacity-60"
             aria-busy={loading}
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? t(locale, "account.login.submitting") : t(locale, "nav.login")}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-sm text-[var(--ink-muted)]">
+          {t(locale, "account.login.help")}
+        </p>
+        <p className="mt-2 text-center text-sm">
+          <Link
+            href="/"
+            className="font-medium text-[var(--accent-strong)] transition hover:text-[var(--accent-strong-hover)]"
+          >
+            {t(locale, "account.login.back")}
+          </Link>
+        </p>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
-import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db/prisma";
 import { success, error } from "@/lib/api/response";
+import { createApiKeyForUser, ApiKeyCreationError } from "@/lib/api-keys";
 
 export async function GET() {
   const keys = await prisma.apiKey.findMany({
@@ -22,41 +22,20 @@ export async function POST(request: NextRequest) {
     return error("User, name, and domain are required", "VALIDATION_ERROR", 400);
   }
 
-  const user = await prisma.user.findUnique({ where: { id: parseInt(userId) } });
-  if (!user) {
-    return error("User not found", "NOT_FOUND", 404);
-  }
-
-  if (user.maxApiKeys !== null) {
-    const keysCount = await prisma.apiKey.count({
-      where: { userId: parseInt(userId) },
-    });
-
-    if (keysCount >= user.maxApiKeys) {
-      return error(
-        `This user has reached the maximum of ${user.maxApiKeys} API keys.`,
-        "API_KEY_LIMIT_REACHED",
-        409
-      );
-    }
-  }
-
-  const rawKey = `bh_${randomBytes(30).toString("hex")}`;
-
-  const apiKey = await prisma.apiKey.create({
-    data: {
-      userId: parseInt(userId),
-      key: rawKey,
+  try {
+    const { apiKey, rawKey } = await createApiKeyForUser(
+      parseInt(userId),
       name,
       domain,
-      isActive: !user.isSuspended,
-      wasActiveBeforeSuspension: false,
-    },
-    include: {
-      user: { select: { id: true, name: true, email: true } },
-    },
-  });
+      { allowWhileSuspended: true }
+    );
 
-  // Return the raw key only on creation — it won't be shown again
-  return success({ ...apiKey, rawKey });
+    return success({ ...apiKey, rawKey });
+  } catch (err) {
+    if (err instanceof ApiKeyCreationError) {
+      return error(err.message, err.code, err.status);
+    }
+
+    throw err;
+  }
 }

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { isConfigured, generateSpeech } from "@/lib/tts/openai";
+import {
+  isConfigured,
+  generateSpeech,
+  getSpeechCacheVariant,
+} from "@/lib/tts/openai";
 import { getCachePath, exists, readCached, writeCached } from "@/lib/tts/cache";
 
 // In-memory dedup: prevents duplicate OpenAI calls for the same verse
@@ -38,7 +42,13 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const cachePath = getCachePath(version, bookNumber, chapter, verse);
+  const cachePath = getCachePath(
+    version,
+    bookNumber,
+    chapter,
+    verse,
+    getSpeechCacheVariant()
+  );
 
   // Serve from cache if available
   if (await exists(cachePath)) {

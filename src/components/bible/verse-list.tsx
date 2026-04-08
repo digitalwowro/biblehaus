@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useTTS } from "@/hooks/use-tts";
+import { t, type Locale } from "@/lib/i18n/translations";
 
 interface Verse {
   id: number | bigint;
@@ -17,6 +18,7 @@ interface VerseListProps {
   version: string;
   bookNumber: number;
   ttsEnabled: boolean;
+  locale: Locale;
 }
 
 export function VerseList({
@@ -27,12 +29,9 @@ export function VerseList({
   version,
   bookNumber,
   ttsEnabled,
+  locale,
 }: VerseListProps) {
-  const [activeVerse, setActiveVerse] = useState<number | null>(() => {
-    if (typeof window === "undefined") return null;
-    const match = window.location.hash.match(/^#v(\d+)$/);
-    return match ? parseInt(match[1], 10) : null;
-  });
+  const [activeVerse, setActiveVerse] = useState<number | null>(null);
   const [showPopover, setShowPopover] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -55,6 +54,23 @@ export function VerseList({
 
     return () => window.clearTimeout(timeout);
   }, [activeVerse]);
+
+  useEffect(() => {
+    function syncFromHash() {
+      const match = window.location.hash.match(/^#v(\d+)$/);
+      if (!match) {
+        setActiveVerse(null);
+        setShowPopover(false);
+        return;
+      }
+      setActiveVerse(parseInt(match[1], 10));
+      setShowPopover(false);
+    }
+
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -138,7 +154,7 @@ export function VerseList({
               className="inline-flex items-center gap-2 rounded-xl border border-[var(--line-soft)] bg-white px-3.5 py-2 text-sm font-medium text-[var(--ink-muted)] transition hover:border-[var(--accent-strong)] hover:text-[var(--accent-strong)]"
             >
               <SpeakerIcon className="h-4 w-4" />
-              Listen to chapter
+              {t(locale, "tts.listen")}
             </button>
           ) : (
             <div className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--line-soft)] bg-white px-1.5 py-1 shadow-sm">
@@ -146,7 +162,7 @@ export function VerseList({
                 <button
                   onClick={() => tts.pausePlayback()}
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--accent-strong)] transition hover:bg-[var(--surface-subtle)]"
-                  title="Pause"
+                  title={t(locale, "tts.pause")}
                 >
                   <PauseIcon className="h-4 w-4" />
                 </button>
@@ -154,7 +170,7 @@ export function VerseList({
                 <button
                   onClick={() => tts.resumePlayback()}
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--accent-strong)] transition hover:bg-[var(--surface-subtle)]"
-                  title="Resume"
+                  title={t(locale, "tts.resume")}
                 >
                   <PlayIcon className="h-4 w-4" />
                 </button>
@@ -162,16 +178,18 @@ export function VerseList({
               <button
                 onClick={() => tts.stopPlayback()}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--ink-muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--ink-strong)]"
-                title="Stop"
+                title={t(locale, "tts.stop")}
               >
                 <StopIcon className="h-4 w-4" />
               </button>
               <div className="mx-1 h-4 w-px bg-[var(--line-soft)]" />
               <span className="px-1.5 text-xs font-medium text-[var(--ink-muted)]">
                 {tts.isLoading ? (
-                  "Loading..."
+                  t(locale, "common.loading")
                 ) : (
-                  <>Verse {tts.playingVerse} / {verses.length}</>
+                  <>
+                    {t(locale, "tts.verse")} {tts.playingVerse} / {verses.length}
+                  </>
                 )}
               </span>
             </div>
@@ -256,7 +274,7 @@ export function VerseList({
                   {/* Share / copy URL */}
                   <button
                     onClick={() => handleShare(v)}
-                    title="Copy link"
+                    title={t(locale, "verse.copy_link")}
                     className={`relative flex h-7 w-7 items-center justify-center rounded-lg transition ${
                       copied === "share"
                         ? "bg-[rgba(34,122,89,0.12)] text-[var(--accent-strong)]"
@@ -276,7 +294,7 @@ export function VerseList({
                       <div className="mx-0.5 h-4 w-px bg-[var(--line-soft)]" />
                       <button
                         onClick={() => tts.playSingleVerse(v.verseNumber)}
-                        title="Listen to verse"
+                        title={t(locale, "tts.listen_verse")}
                         className={`relative flex h-7 w-7 items-center justify-center rounded-lg transition ${
                           tts.playingVerse === v.verseNumber && tts.mode === "single"
                             ? "bg-[rgba(34,122,89,0.12)] text-[var(--accent-strong)]"
@@ -294,7 +312,7 @@ export function VerseList({
 
                   {copied && (
                     <span className="ml-1 text-[10px] font-semibold text-[var(--accent-strong)]">
-                      Copied!
+                      {t(locale, "common.copied")}
                     </span>
                   )}
                 </div>

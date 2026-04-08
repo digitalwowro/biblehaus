@@ -22,12 +22,18 @@ export default async function LanguagePage({ params }: { params: Promise<{ lang:
 
   return (
     <div>
-      <Link
-        href="/browse"
-        className="text-sm text-[var(--ink-muted)] transition hover:text-[var(--accent-strong)]"
-      >
-        &larr; {t(locale, "lang.back")}
-      </Link>
+      <nav className="flex flex-wrap items-center gap-1.5 text-sm text-[var(--ink-muted)]">
+        <Link
+          href="/browse"
+          className="transition hover:text-[var(--accent-strong)]"
+        >
+          {t(locale, "browse.title")}
+        </Link>
+        <span>/</span>
+        <span className="font-medium text-[var(--ink-strong)]">
+          {language.name}
+        </span>
+      </nav>
 
       <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-[var(--ink-strong)]">
         {language.name}
@@ -37,7 +43,9 @@ export default async function LanguagePage({ params }: { params: Promise<{ lang:
         {versions.length === 1
           ? t(locale, "browse.version")
           : t(locale, "browse.versions")}{" "}
-        {t(locale, "lang.available")}
+        {versions.length === 1
+          ? t(locale, "lang.available")
+          : t(locale, "lang.available_plural")}
       </p>
 
       {versions.length === 0 ? (

@@ -2,10 +2,12 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    env_file:
+      - .env.docker
     environment:
       POSTGRES_DB: biblehaus
       POSTGRES_USER: biblehaus
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-biblehaus_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -16,13 +18,11 @@ services:
     pull_policy: always
     ports:
       - "3000:3000"
+    env_file:
+      - .env.docker
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://biblehaus:${POSTGRES_PASSWORD:-biblehaus_dev}@db:5432/biblehaus
-      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
-      - TTS_ENABLED=${TTS_ENABLED:-false}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - TTS_VOICE=${TTS_VOICE:-nova}
+      - DATABASE_URL=postgresql://biblehaus:${POSTGRES_PASSWORD}@db:5432/biblehaus
       - TTS_CACHE_DIR=/app/.cache/tts
     volumes:
       - tts_cache:/app/.cache/tts

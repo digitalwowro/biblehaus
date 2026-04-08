@@ -3,6 +3,7 @@ import { jwtVerify } from "jose";
 import { getJwtSecret } from "@/lib/auth/jwt";
 
 const COOKIE_NAME = "biblehaus_admin_token";
+const USER_COOKIE_NAME = "biblehaus_user_token";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -43,6 +44,42 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  if (pathname.startsWith("/account") && !pathname.startsWith("/account/login")) {
+    const token = request.cookies.get(USER_COOKIE_NAME)?.value;
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    try {
+      await jwtVerify(token, getJwtSecret());
+    } catch {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
+
+  if (pathname.startsWith("/api/account") && !pathname.startsWith("/api/account/auth")) {
+    const token = request.cookies.get(USER_COOKIE_NAME)?.value;
+    if (!token) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: { code: "UNAUTHORIZED", message: "Not authenticated" },
+        },
+        { status: 401 }
+      );
+    }
+    try {
+      await jwtVerify(token, getJwtSecret());
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          error: { code: "UNAUTHORIZED", message: "Invalid or expired token" },
+        },
+        { status: 401 }
+      );
+    }
+  }
+
   if (pathname.startsWith("/api/v1")) {
     const apiKey = request.headers.get("x-api-key");
     if (!apiKey) {
@@ -74,5 +111,14 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*", "/api/v1/:path*", "/", "/browse/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/api/admin/:path*",
+    "/api/account/:path*",
+    "/api/v1/:path*",
+    "/",
+    "/account/:path*",
+    "/login",
+    "/browse/:path*",
+  ],
 };

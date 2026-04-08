@@ -34,12 +34,25 @@ export default async function VersionPage({
 
   return (
     <div>
-      <Link
-        href={`/browse/${lang.toLowerCase()}`}
-        className="text-sm text-[var(--ink-muted)] transition hover:text-[var(--accent-strong)]"
-      >
-        &larr; {versionRecord.language.name}
-      </Link>
+      <nav className="flex flex-wrap items-center gap-1.5 text-sm text-[var(--ink-muted)]">
+        <Link
+          href="/browse"
+          className="transition hover:text-[var(--accent-strong)]"
+        >
+          {t(locale, "browse.title")}
+        </Link>
+        <span>/</span>
+        <Link
+          href={`/browse/${lang.toLowerCase()}`}
+          className="transition hover:text-[var(--accent-strong)]"
+        >
+          {versionRecord.language.name}
+        </Link>
+        <span>/</span>
+        <span className="font-medium text-[var(--ink-strong)]">
+          {versionRecord.name}
+        </span>
+      </nav>
 
       <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-[var(--ink-strong)]">
         {versionRecord.name}

@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs/promises";
+import { createHash } from "crypto";
 
 const CACHE_DIR = process.env.TTS_CACHE_DIR || ".cache/tts";
 
@@ -14,15 +15,23 @@ export function getCachePath(
   bookNumber: number,
   chapter: number,
   verse: number,
+  variant: string = "default",
 ): string {
   const bookPadded = String(bookNumber).padStart(2, "0");
   return path.join(
     getBasePath(),
+    sanitizePathSegment(variant),
     version.toLowerCase(),
     bookPadded,
     String(chapter),
     `${verse}.mp3`,
   );
+}
+
+function sanitizePathSegment(value: string): string {
+  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9._-]+/g, "-");
+  if (normalized.length <= 64) return normalized || "default";
+  return createHash("sha1").update(normalized).digest("hex");
 }
 
 export async function exists(cachePath: string): Promise<boolean> {

@@ -109,6 +109,7 @@ export default async function ChapterPage({
           version={versionRecord.abbreviation}
           bookNumber={bookRecord.bookNumber}
           ttsEnabled={process.env.TTS_ENABLED === "true"}
+          locale={locale}
         />
       </article>
 

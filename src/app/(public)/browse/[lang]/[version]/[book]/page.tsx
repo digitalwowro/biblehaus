@@ -44,12 +44,32 @@ export default async function BookPage({
 
   return (
     <div>
-      <Link
-        href={`/browse/${lang.toLowerCase()}/${version.toLowerCase()}`}
-        className="text-sm text-[var(--ink-muted)] transition hover:text-[var(--accent-strong)]"
-      >
-        &larr; {versionRecord.name}
-      </Link>
+      <nav className="flex flex-wrap items-center gap-1.5 text-sm text-[var(--ink-muted)]">
+        <Link
+          href="/browse"
+          className="transition hover:text-[var(--accent-strong)]"
+        >
+          {t(locale, "browse.title")}
+        </Link>
+        <span>/</span>
+        <Link
+          href={`/browse/${lang.toLowerCase()}`}
+          className="transition hover:text-[var(--accent-strong)]"
+        >
+          {versionRecord.language.name}
+        </Link>
+        <span>/</span>
+        <Link
+          href={`/browse/${lang.toLowerCase()}/${version.toLowerCase()}`}
+          className="transition hover:text-[var(--accent-strong)]"
+        >
+          {versionRecord.name}
+        </Link>
+        <span>/</span>
+        <span className="font-medium text-[var(--ink-strong)]">
+          {bookRecord.name}
+        </span>
+      </nav>
 
       <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-[var(--ink-strong)]">
         {bookRecord.name}

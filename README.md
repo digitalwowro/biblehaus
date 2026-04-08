@@ -1,43 +1,34 @@
 # BibleHaus
 
-## Docker Compose
-
-1. Copy [`.env.example`](D:/Code/projects/biblehaus/.env.example) to `.env`
-2. Start the stack:
+1. Download the environment file:
 
 ```bash
-docker compose up
+curl -o .env https://raw.githubusercontent.com/digitalwowro/biblehaus/main/.env.example
+```
+
+2. Download the Docker Compose file:
+
+```bash
+curl -o docker-compose.yml https://raw.githubusercontent.com/digitalwowro/biblehaus/main/docker-compose.yml
+```
+
+3. Generate a JWT secret:
+
+```bash
+openssl rand -base64 48
+```
+
+4. Edit [`.env`](D:/Code/projects/biblehaus/.env) and set `JWT_SECRET` to the generated value.
+
+5. Start the containers:
+
+```bash
+docker compose up -d
 ```
 
 The app runs at [http://localhost:3000](http://localhost:3000).
 
-## Environment
-
-Local development uses [`.env.dev`](D:/Code/projects/biblehaus/.env.dev).
-
-Docker / production uses [`.env`](D:/Code/projects/biblehaus/.env), created from [`.env.example`](D:/Code/projects/biblehaus/.env.example).
-
-Required:
-
-```env
-JWT_SECRET=replace-this-with-a-strong-secret
-```
-
-Optional:
-
-```env
-POSTGRES_PASSWORD=biblehaus_dev
-TTS_ENABLED=false
-OPENAI_API_KEY=
-TTS_MODEL=gpt-4o-mini-tts
-TTS_VOICE=ash
-TTS_SPEED=0.85
-TTS_INSTRUCTIONS=Speak slowly and clearly, with short pauses between sentences.
-```
-
-## Initial Credentials
-
-On first container startup, the app creates this admin account if it does not already exist:
+Default admin credentials:
 
 - email: `admin@bible.haus`
 - password: `biblehaus`

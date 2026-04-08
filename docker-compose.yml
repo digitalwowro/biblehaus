@@ -12,10 +12,8 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: ["sh", "./docker-entrypoint.sh"]
+    image: ${WEB_IMAGE:-ghcr.io/digitalwowro/biblehaus:latest}
+    pull_policy: always
     ports:
       - "3000:3000"
     environment:

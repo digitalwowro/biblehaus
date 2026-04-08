@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: biblehaus
       POSTGRES_PASSWORD: biblehaus
     volumes:
-      - biblehaus_sql:/var/lib/postgresql/data
+      - ./sql:/var/lib/postgresql/data
     networks:
       - biblehaus_internal
     healthcheck:
@@ -54,6 +54,4 @@ networks:
   biblehaus_external:
     internal: false
 
-volumes:
-  biblehaus_sql:
 

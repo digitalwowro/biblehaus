@@ -2,18 +2,20 @@
 
 ## Docker Compose
 
-1. Copy [`.env.docker.example`](D:/Code/projects/biblehaus/.env.docker.example) to `.env.docker`
+1. Copy [`.env.example`](D:/Code/projects/biblehaus/.env.example) to `.env`
 2. Start the stack:
 
 ```bash
-docker compose --env-file .env.docker up
+docker compose up
 ```
 
 The app runs at [http://localhost:3000](http://localhost:3000).
 
 ## Environment
 
-Docker uses [`.env.docker`](D:/Code/projects/biblehaus/.env.docker).
+Local development uses [`.env.dev`](D:/Code/projects/biblehaus/.env.dev).
+
+Docker / production uses [`.env`](D:/Code/projects/biblehaus/.env), created from [`.env.example`](D:/Code/projects/biblehaus/.env.example).
 
 Required:
 

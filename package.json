@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3737",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node scripts/run-with-env.mjs .env.dev next dev --port 3737",
+    "build": "node scripts/run-with-env.mjs .env.dev next build",
+    "start": "node scripts/run-with-env.mjs .env.dev next start",
     "lint": "eslint",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "npx tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset",
-    "import": "npx tsx scripts/import-bible.ts"
+    "db:migrate": "node scripts/run-with-env.mjs .env.dev prisma migrate dev",
+    "db:seed": "node scripts/run-with-env.mjs .env.dev npx tsx prisma/seed.ts",
+    "db:reset": "node scripts/run-with-env.mjs .env.dev prisma migrate reset",
+    "import": "node scripts/run-with-env.mjs .env.dev npx tsx scripts/import-bible.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.7.0",

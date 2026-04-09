@@ -144,13 +144,8 @@ export default function VersionsPage() {
     fetchData();
   }
 
-  async function togglePublish(ver: Version) {
-    await fetch(`/api/admin/versions/${ver.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isPublished: !ver.isPublished }),
-    });
-    fetchData();
+  function handleExport(ver: Version) {
+    window.location.assign(`/api/admin/versions/${ver.id}/export`);
   }
 
   return (
@@ -199,8 +194,7 @@ export default function VersionsPage() {
               key: "isPublished",
               header: "Status",
               render: (ver: Version) => (
-                <button
-                  onClick={() => togglePublish(ver)}
+                <span
                   className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition ${
                     ver.isPublished
                       ? "border-[rgba(34,122,89,0.18)] bg-[rgba(34,122,89,0.08)] text-[var(--accent-strong)]"
@@ -208,7 +202,7 @@ export default function VersionsPage() {
                   }`}
                 >
                   {ver.isPublished ? "Published" : "Draft"}
-                </button>
+                </span>
               ),
             },
           ]}
@@ -216,6 +210,9 @@ export default function VersionsPage() {
           keyField="id"
           actions={(ver: Version) => (
             <>
+              <Button variant="secondary" onClick={() => handleExport(ver)}>
+                Export
+              </Button>
               <Button variant="secondary" onClick={() => openEdit(ver)}>
                 Edit
               </Button>

@@ -28,6 +28,13 @@ openssl rand -base64 48
 docker compose up -d
 ```
 
+To update later:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
 The app runs at `http://localhost:<APP_PORT>`, which defaults to [http://localhost:3000](http://localhost:3000).
 
 Postgres is kept on a private Docker network and is not exposed on the host.

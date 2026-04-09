@@ -66,6 +66,12 @@ export default async function BookPage({
           {versionRecord.name}
         </Link>
         <span>/</span>
+        <span className="text-[var(--ink-muted)]">
+          {bookRecord.testament === "OT"
+            ? t(locale, "version.ot")
+            : t(locale, "version.nt")}
+        </span>
+        <span>/</span>
         <span className="font-medium text-[var(--ink-strong)]">
           {bookRecord.name}
         </span>
